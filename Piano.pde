@@ -17,6 +17,13 @@ Boolean rightGrab;
 float grabThreshold = 1.0;
 int leftI = -1;
 int rightI = -1;
+int scene = 0;
+Boolean menuShown = false;
+PImage menu;
+ArrayList menuBtn = new ArrayList();
+int btnX;
+int btnWidth = 300;
+int btnHeight = 90;
 
 //vicky
 int x;
@@ -34,10 +41,19 @@ LeapMotion leap;
 void setup() {
   size(988, 600);
   leap = new LeapMotion(this);
+  menu = loadImage("img/Menu.png");
   textAlign(CENTER);
   setupFingerImg();
-  
+  setupMenu();
   sceneSound();
+}
+
+void setupMenu(){
+  btnX = (width-364)/2+30;
+  menuBtn.add((float)(height-538)/2+25);
+  menuBtn.add((float)(height-538)/2+160);
+  menuBtn.add((float)(height-538)/2+290);
+  menuBtn.add((float)(height-538)/2+420);
 }
 
 void sceneSound(){
@@ -69,14 +85,28 @@ void sceneSound(){
 
 void draw() {
   background(100);
-  createKeys();  
-  drawanyKey();
+  createKeys();
+  if(scene==0){
+      drawanyKey();
+  }else if(scene==1){
+    
+  }else if(scene==2){
+    
+  }
+  //drawanyKey();
   blackKey();
 
   int fps = leap.getFrameRate();
   fill(#00E310);
   text(fps + " fps", 20, 20);
 
+  menuShown = false;
+  detectPressed();
+  detectReleased();
+  detectGrab();
+  leftGrab = false;
+  rightGrab = false;
+ 
   for (Hand hand : leap.getHands ()) {
 
     PVector thumbTip = hand.getThumb().getRawPositionOfJointTip();
@@ -114,9 +144,42 @@ void draw() {
     hand.draw();    
   }
   
-  detectPressed();
-  detectReleased();
-  
+}
+
+void detectGrab(){
+  if((leftGrab!=null&&leftGrab)||(rightGrab!=null&&rightGrab)){
+    image(menu,(width-364)/2,(height-538)/2,364,538); 
+    menuShown = true;
+  }
+  if(menuShown){
+    if(leftGrab){
+      if(rightIndex!=null&&rightIndex.x<btnX+btnWidth&&rightIndex.x>btnX){
+        if(rightIndex.y>(float)menuBtn.get(0)&&rightIndex.y<(float)btnHeight+(float)menuBtn.get(0)){
+          scene = 0;
+          System.out.println("right0");
+        }else if(rightIndex.y>(float)menuBtn.get(1)&&rightIndex.y<(float)btnHeight+(float)menuBtn.get(1)){
+          scene = 1;
+          System.out.println("right1");
+        }else if(rightIndex.y>(float)menuBtn.get(2)&&rightIndex.y<(float)btnHeight+(float)menuBtn.get(2)){
+          scene = 2;
+          System.out.println("right2");
+        }
+      }
+    }else if(rightGrab){
+      if(leftIndex!=null&&leftIndex.x<btnX+btnWidth&&leftIndex.x>btnX){
+        if(leftIndex.y>(float)menuBtn.get(0)&&leftIndex.y<(float)btnHeight+(float)menuBtn.get(0)){
+          scene = 0;
+          System.out.println("left0");
+        }else if(leftIndex.y>(float)menuBtn.get(1)&&leftIndex.y<(float)btnHeight+(float)menuBtn.get(1)){
+          scene = 1;
+          System.out.println("left1");
+        }else if(leftIndex.y>(float)menuBtn.get(2)&&leftIndex.y<(float)btnHeight+(float)menuBtn.get(2)){
+          scene = 2;
+          System.out.println("left2");
+        }
+      }
+    }
+  }
 }
 
 void setupFingerImg(){
