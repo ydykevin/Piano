@@ -4,7 +4,6 @@ public class Key {
   private boolean locked=false;
   private int x1;
 
-
   public  Key(int x2) {
     this.x1=x2;
   }

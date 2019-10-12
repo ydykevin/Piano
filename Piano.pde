@@ -17,6 +17,7 @@ Boolean rightGrab;
 float grabThreshold = 1.0;
 int leftI = -1;
 int rightI = -1;
+int lastR = -1;
 int scene = 0;
 Boolean menuShown = false;
 PImage menu;
@@ -24,6 +25,10 @@ ArrayList menuBtn = new ArrayList();
 int btnX;
 int btnWidth = 300;
 int btnHeight = 90;
+Boolean newMode = false;
+long currTime;
+Boolean leaveLeft = true;
+Boolean leaveRight = true;
 
 //vicky
 int x;
@@ -36,6 +41,23 @@ AudioPlayer player;
 ArrayList<Key> keys = new ArrayList();
 ArrayList<String> sound = new ArrayList();
 
+//gloria
+AudioPlayer bgm;
+AudioPlayer Excellent;
+//AudioPlayer Miss;
+int r;
+int a = 20;
+int score = 1;
+PImage excellent;
+PImage miss;
+long time1,time2;
+boolean answer = false;
+
+int music[]={1, 1, 5, 5, 6, 6, 5, 4, 4, 3, 3, 2, 2, 1, 5, 5, 4, 4, 3, 3, 2, 5, 5, 4, 4, 3, 3, 2, 1, 1, 5, 5, 6, 6, 5, 4, 4, 3, 3, 2, 2, 1};
+int m = 42;
+int i=0;
+int b=10;
+
 LeapMotion leap;
 
 void setup() {
@@ -45,7 +67,20 @@ void setup() {
   textAlign(CENTER);
   setupFingerImg();
   setupMenu();
+  setupGame();
   sceneSound();
+}
+
+void setupGame(){
+ //gloria
+  minim = new Minim(this);
+  bgm = minim.loadFile("sound/bgm.mp3");
+  Excellent = minim.loadFile("sound/excellent.wav");
+  //Miss = minim.loadFile("sound/miss.wav");
+  excellent=loadImage("img/excellent.png");
+  excellent.resize(200,130);
+  miss=loadImage("img/miss.png");
+  miss.resize(200,100); 
 }
 
 void setupMenu(){
@@ -59,7 +94,6 @@ void setupMenu(){
 void sceneSound(){
   x = width/21;
   y = height/2; 
-  minim = new Minim(this); 
   sound.add("sound/c3.mp3");
   sound.add("sound/d3.mp3");
   sound.add("sound/e3.mp3");
@@ -87,11 +121,25 @@ void draw() {
   background(100);
   createKeys();
   if(scene==0){
-      drawanyKey();
+    textSize(60);
+    fill(255);
+    text("Free Play", width/2, height/5);
+    textSize(12);
+    drawanyKey();
   }else if(scene==1){
-    
+    textSize(60);
+    fill(255);
+    text("Tutorial", width/2, height/5);
+    textSize(12);
+    drawanyKey();
+    tutorial();
   }else if(scene==2){
-    
+    textSize(60);
+    fill(255);
+    text("Game", width/2-300, height/5);
+    textSize(12);
+    drawanyKey();
+    randomL();
   }
   //drawanyKey();
   blackKey();
@@ -106,48 +154,54 @@ void draw() {
   detectGrab();
   leftGrab = false;
   rightGrab = false;
- 
-  for (Hand hand : leap.getHands ()) {
-
-    PVector thumbTip = hand.getThumb().getRawPositionOfJointTip();
-    PVector indexTip = hand.getIndexFinger().getRawPositionOfJointTip();
-    PVector ringTip = hand.getRingFinger().getRawPositionOfJointTip();
-    PVector middleTip = hand.getMiddleFinger().getRawPositionOfJointTip();
-    PVector pinkyTip = hand.getPinkyFinger().getRawPositionOfJointTip();
-
-    //Set label for each finger
-    handleFinger(thumbTip, "Thb", hand.getPalmPosition(),0);
-    if(hand.isLeft()){
-      handleFinger(indexTip, "Idx", hand.getPalmPosition(),1);
-    }else{
-      handleFinger(indexTip, "Idx", hand.getPalmPosition(),2);
+  
+  if(!newMode){
+    for (Hand hand : leap.getHands ()) {
+  
+      PVector thumbTip = hand.getThumb().getRawPositionOfJointTip();
+      PVector indexTip = hand.getIndexFinger().getRawPositionOfJointTip();
+      PVector ringTip = hand.getRingFinger().getRawPositionOfJointTip();
+      PVector middleTip = hand.getMiddleFinger().getRawPositionOfJointTip();
+      PVector pinkyTip = hand.getPinkyFinger().getRawPositionOfJointTip();
+  
+      //Set label for each finger
+      handleFinger(thumbTip, "Thb", 0);
+      if(hand.isLeft()){
+        handleFinger(indexTip, "Idx", 1);
+      }else{
+        handleFinger(indexTip, "Idx", 2);
+      }
+      handleFinger(middleTip, "Mdl",0);
+      handleFinger(ringTip, "Rng", 0);
+      handleFinger(pinkyTip, "Pky", 0);
+      
+      //Detect grab gesture
+      if(hand.isLeft()&&hand.getGrabStrength()>=grabThreshold){
+        leftGrab = true;
+      }else if(hand.isLeft()&&hand.getGrabStrength()<grabThreshold){
+        leftGrab = false;
+      }
+      
+      if(hand.isRight()&&hand.getGrabStrength()>=grabThreshold){
+        rightGrab = true;
+      }else if(hand.isRight()&&hand.getGrabStrength()<grabThreshold){
+        rightGrab = false;
+      }
+      
+      //System.out.println("isLeftGrab: "+leftGrab+" isRightGrab: "+rightGrab);
+      
+      hand.draw();    
     }
-    handleFinger(middleTip, "Mdl", hand.getPalmPosition(),0);
-    handleFinger(ringTip, "Rng", hand.getPalmPosition(),0);
-    handleFinger(pinkyTip, "Pky", hand.getPalmPosition(),0);
-    
-    //Detect grab gesture
-    if(hand.isLeft()&&hand.getGrabStrength()>=grabThreshold){
-      leftGrab = true;
-    }else if(hand.isLeft()&&hand.getGrabStrength()<grabThreshold){
-      leftGrab = false;
-    }
-    
-    if(hand.isRight()&&hand.getGrabStrength()>=grabThreshold){
-      rightGrab = true;
-    }else if(hand.isRight()&&hand.getGrabStrength()<grabThreshold){
-      rightGrab = false;
-    }
-    
-    //System.out.println("isLeftGrab: "+leftGrab+" isRightGrab: "+rightGrab);
-    
-    hand.draw();    
+  }
+  
+  if(newMode&&(System.currentTimeMillis()-currTime)>3000){
+    newMode = false;
   }
   
 }
 
 void detectGrab(){
-  if((leftGrab!=null&&leftGrab)||(rightGrab!=null&&rightGrab)){
+  if((leftGrab!=null&&leftGrab)&&(rightGrab!=null&&rightGrab)&&!newMode){
     image(menu,(width-364)/2,(height-538)/2,364,538); 
     menuShown = true;
   }
@@ -156,26 +210,45 @@ void detectGrab(){
       if(rightIndex!=null&&rightIndex.x<btnX+btnWidth&&rightIndex.x>btnX){
         if(rightIndex.y>(float)menuBtn.get(0)&&rightIndex.y<(float)btnHeight+(float)menuBtn.get(0)){
           scene = 0;
-          System.out.println("right0");
+          newMode = true;
+          currTime = System.currentTimeMillis();
+          bgm.pause();
         }else if(rightIndex.y>(float)menuBtn.get(1)&&rightIndex.y<(float)btnHeight+(float)menuBtn.get(1)){
           scene = 1;
-          System.out.println("right1");
+          newMode = true;
+          i=0;
+          bgm.pause();
+          currTime = System.currentTimeMillis();
         }else if(rightIndex.y>(float)menuBtn.get(2)&&rightIndex.y<(float)btnHeight+(float)menuBtn.get(2)){
           scene = 2;
-          System.out.println("right2");
+          newMode = true;
+          score=1;
+          currTime = System.currentTimeMillis();
+        }else if(rightIndex.y>(float)menuBtn.get(3)&&rightIndex.y<(float)btnHeight+(float)menuBtn.get(3)){
+          exit();
         }
       }
-    }else if(rightGrab){
+    }
+    if(rightGrab){
       if(leftIndex!=null&&leftIndex.x<btnX+btnWidth&&leftIndex.x>btnX){
         if(leftIndex.y>(float)menuBtn.get(0)&&leftIndex.y<(float)btnHeight+(float)menuBtn.get(0)){
           scene = 0;
-          System.out.println("left0");
+          newMode = true;
+          bgm.pause();
+          currTime = System.currentTimeMillis();
         }else if(leftIndex.y>(float)menuBtn.get(1)&&leftIndex.y<(float)btnHeight+(float)menuBtn.get(1)){
           scene = 1;
-          System.out.println("left1");
+          newMode = true;
+          i=0;
+          bgm.pause();
+          currTime = System.currentTimeMillis();
         }else if(leftIndex.y>(float)menuBtn.get(2)&&leftIndex.y<(float)btnHeight+(float)menuBtn.get(2)){
           scene = 2;
-          System.out.println("left2");
+          newMode = true;
+          score=1;
+          currTime = System.currentTimeMillis();
+        }else if(leftIndex.y>(float)menuBtn.get(3)&&leftIndex.y<(float)btnHeight+(float)menuBtn.get(3)){
+          exit();
         }
       }
     }
@@ -191,7 +264,7 @@ void setupFingerImg(){
   otherFingersGif.loop();
 }
 
-void handleFinger(PVector pos, String id, PVector palm, int finger) {
+void handleFinger(PVector pos, String id, int finger) {
 
   float x = map(pos.x, -handGap, handGap, 0, width);
   float y = map(-pos.z, -depth, depth, 0, height);
@@ -209,23 +282,6 @@ void handleFinger(PVector pos, String id, PVector palm, int finger) {
   fill(#00E310);
   text(id, x, y - 20);
 }
-
-//PVector getLeftIndexPosition(){
-//  return leftIndex;
-//}
-
-//PVector getRightIndexPosition(){
-//  return rightIndex;
-//}
-
-//Boolean isLeftGrab(){
-//  return leftGrab;
-//}
-
-//Boolean isRightGrab(){
-//  return rightGrab;
-//}
-
 
 //
 void createKeys() {
@@ -249,18 +305,6 @@ void drawanyKey() {
         break;
       }
     }
-    //if (mouseX > i*x && mouseX < (i+1)*x) {
-    //  keys.get(i).overBox=true;
-    //  if (!keys.get(i).locked) { 
-    //    fill(#FFFFFF);
-    //  } else {
-    //    fill(#C9C9C9);
-    //    rect(i*x, height/2, x, 2*y-10);
-    //  }
-    //} else {
-    //  fill(#FFFFFF);
-    //  keys.get(i).overBox = false;
-    //}
     if ((leftIndex!=null&&leftIndex.y>=height/2&&leftIndex.x > i*x && leftIndex.x < (i+1)*x)||(rightIndex!=null&&rightIndex.y>=height/2&&rightIndex.x > i*x && rightIndex.x < (i+1)*x)) {
       keys.get(i).overBox=true;
       if (!keys.get(i).locked) { 
@@ -280,13 +324,17 @@ void drawanyKey() {
 void detectReleased(){
   if(leftIndex!=null&&leftIndex.y<height/2){
     leftI=-1;
+    leaveLeft = true;
   }
   if(rightIndex!=null&&rightIndex.y<height/2){
     rightI=-1;
+    leaveRight = true;
   }
   if(leftIndex==null||rightIndex==null){
     drawanyKey();
     blackKey();
+    leaveLeft = true;
+    leaveRight = true;
   }
 }
 
@@ -297,6 +345,12 @@ void detectPressed(){
 
 void playSound(PVector index){
   if(index!=null&&index.y>=height/2){
+    if(index==leftIndex){
+      leaveLeft = false;
+    }
+    if(index==rightIndex){
+      leaveRight = false;
+    }
     for (int i=0; i<21; ++i) {
     if (index.x > i*x && index.x< (i+1)*x) 
     {
@@ -390,4 +444,87 @@ void mouseReleased() {
   player.pause();   
   for (Key k : keys)
     k.locked = false;
+}
+
+//gloria
+void randomL(){
+
+  bgm.play();
+  //while (ran == true) {
+  time2 = System.currentTimeMillis();
+  if (time2 - time1 >= 5000) {
+    r = int(random(22));
+    time1 = time2;
+    Excellent = minim.loadFile("sound/excellent.wav");
+    Excellent.pause();
+  }
+  
+  //if () {
+    //ran == false
+    //bgm.stop();};
+  fill(#BEEDA8);  
+  
+  triangle(r*x+10,y-2*a,r*x+x/2,y-a,(r+1)*x-10,y-2*a);
+  //answer = false;
+  Score();
+  if (answer == true) {
+    image(excellent,width/2-100,height/3-150);
+  }else {
+    image(miss, width/2-100, height/3-150);
+  }
+  fill(0);
+  textSize(45);
+  text("SCORE:   " + score, width/2, height/2-50);
+  textSize(12);
+  //}
+}
+
+void Score(){
+  if ((leftIndex!=null&&leftIndex.y>=height/2&&leftIndex.x > r*x && leftIndex.x < (r+1)*x)||(rightIndex!=null&&rightIndex.y>=height/2&&rightIndex.x > r*x && rightIndex.x < (r+1)*x)) 
+    //mouseX > r*x && mouseX < (r+1)*x) //mouse mode
+    {
+      if(lastR!=r){
+        score++;
+        answer = true;
+        lastR = r;
+        Excellent.play();
+      }
+      
+     } else if((leftIndex!=null&&leftIndex.y>=height/2&&(leftIndex.x < r*x || leftIndex.x > (r+1)*x))||(rightIndex!=null&&rightIndex.y>=height/2&&(rightIndex.x < r*x || rightIndex.x > (r+1)*x))){
+       if(lastR!=r){
+        score--;
+        answer = false;
+        lastR = r;
+      }
+      
+  }
+}
+
+void tutorial() {
+  for (int j=1; j<22; j++) {
+    if(i!=m){
+      if (music[i]+6==j) {
+        fill(200, 0, 0);
+        triangle(j*x+10,y-3*b,j*x+x/2,y-b,(j+1)*x-10,y-3*b);
+        if 
+        ((leaveLeft&&leaveRight)&&((leftIndex!=null&&leftIndex.y>=height/2&&leftIndex.x > j*x && leftIndex.x < (j+1)*x)||(rightIndex!=null&&rightIndex.y>=height/2&&rightIndex.x > j*x && rightIndex.x < (j+1)*x))) 
+        //(mouseX > j*x && mouseX < (j+1)*x) //mouse mode
+        {
+          i++;
+          leaveLeft = false;
+          leaveRight = false;
+        }
+      } 
+    }
+  }
+  fill(255);
+  rect(width/2-205, height/3-20, 410, 10);
+  fill(0, 255, 0);
+  rect(width/2-205, height/3-20, i*10, 10);
+  textSize(40);
+  float q= i*10.0/(m*10)*100;
+  int qy=round(q);
+  text(qy+"%", width/2, height/3+50);
+  textSize(12);
+ 
 }
