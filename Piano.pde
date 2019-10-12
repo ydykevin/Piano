@@ -15,6 +15,8 @@ PVector rightIndex;
 Boolean leftGrab;
 Boolean rightGrab;
 float grabThreshold = 1.0;
+int leftI = -1;
+int rightI = -1;
 
 //vicky
 int x;
@@ -107,10 +109,13 @@ void draw() {
       rightGrab = false;
     }
     
-    System.out.println("isLeftGrab: "+leftGrab+" isRightGrab: "+rightGrab);
+    //System.out.println("isLeftGrab: "+leftGrab+" isRightGrab: "+rightGrab);
     
     hand.draw();    
   }
+  
+  detectPressed();
+  detectReleased();
   
 }
 
@@ -142,21 +147,21 @@ void handleFinger(PVector pos, String id, PVector palm, int finger) {
   text(id, x, y - 20);
 }
 
-PVector getLeftIndexPosition(){
-  return leftIndex;
-}
+//PVector getLeftIndexPosition(){
+//  return leftIndex;
+//}
 
-PVector getRightIndexPosition(){
-  return rightIndex;
-}
+//PVector getRightIndexPosition(){
+//  return rightIndex;
+//}
 
-Boolean isLeftGrab(){
-  return leftGrab;
-}
+//Boolean isLeftGrab(){
+//  return leftGrab;
+//}
 
-Boolean isRightGrab(){
-  return rightGrab;
-}
+//Boolean isRightGrab(){
+//  return rightGrab;
+//}
 
 
 //
@@ -181,7 +186,19 @@ void drawanyKey() {
         break;
       }
     }
-    if (mouseX > i*x && mouseX < (i+1)*x) {
+    //if (mouseX > i*x && mouseX < (i+1)*x) {
+    //  keys.get(i).overBox=true;
+    //  if (!keys.get(i).locked) { 
+    //    fill(#FFFFFF);
+    //  } else {
+    //    fill(#C9C9C9);
+    //    rect(i*x, height/2, x, 2*y-10);
+    //  }
+    //} else {
+    //  fill(#FFFFFF);
+    //  keys.get(i).overBox = false;
+    //}
+    if ((leftIndex!=null&&leftIndex.y>=height/2&&leftIndex.x > i*x && leftIndex.x < (i+1)*x)||(rightIndex!=null&&rightIndex.y>=height/2&&rightIndex.x > i*x && rightIndex.x < (i+1)*x)) {
       keys.get(i).overBox=true;
       if (!keys.get(i).locked) { 
         fill(#FFFFFF);
@@ -197,8 +214,66 @@ void drawanyKey() {
   }
 }
 
-void mousePressed() {
+void detectReleased(){
+  if(leftIndex!=null&&leftIndex.y<height/2){
+    leftI=-1;
+  }
+  if(rightIndex!=null&&rightIndex.y<height/2){
+    rightI=-1;
+  }
+  if(leftIndex==null||rightIndex==null){
+    drawanyKey();
+    blackKey();
+  }
+}
 
+void detectPressed(){
+  playSound(leftIndex);
+  playSound(rightIndex);
+}
+
+void playSound(PVector index){
+  if(index!=null&&index.y>=height/2){
+    for (int i=0; i<21; ++i) {
+    if (index.x > i*x && index.x< (i+1)*x) 
+    {
+      if(index==leftIndex&&leftI==i){
+        break;
+      }else if(index==rightIndex&&rightI==i){
+        break;
+      }
+      if(index==leftIndex){
+        leftI=i;
+      }else if(index==rightIndex){
+        rightI=i;
+      }
+      keys.get(i).locked=true;
+      
+      player = minim.loadFile(sound.get(i));
+
+
+      if
+        ( player.isPlaying() ) {
+
+        player.pause();
+      } else
+        if  ( player.position() == player.length() ) {
+
+          player.rewind();
+
+          player.play();
+        } else
+        {
+
+          player.play();
+        }
+    }
+  }
+  }
+}
+
+void mousePressed() {
+  System.out.println("1");
   for (int i=0; i<21; ++i) {
     if (mouseX > i*x && mouseX< (i+1)*x) 
     {
